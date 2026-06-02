@@ -1,0 +1,27 @@
+# Core
+Django==4.2.16
+djangorestframework==3.15.2
+
+# Database
+psycopg2-binary==2.9.10
+dj-database-url==2.3.0
+
+# Auth
+djangorestframework-simplejwt==5.3.1
+
+# Storage (Supabase S3-compatible)
+django-storages[s3]==1.14.4
+boto3==1.35.0
+
+# Config
+python-decouple==3.8
+
+# CORS
+django-cors-headers==4.5.0
+
+# Static files
+whitenoise==6.8.2
+
+# Dev / tooling
+Pillow==11.0.0
+gunicorn==23.0.0
