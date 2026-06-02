@@ -29,13 +29,18 @@ DJANGO_APPS = [
 THIRD_PARTY_APPS = [
     'rest_framework',
     'rest_framework_simplejwt',
+    'rest_framework_simplejwt.token_blacklist',
     'corsheaders',
     'storages',
 ]
 
 LOCAL_APPS = [
-    # Register new apps here as: 'apps.app_name'
-    # e.g. 'apps.users', 'apps.datasets', 'apps.pipeline'
+    'apps.users',
+    'apps.taxonomy',
+    'apps.datasets',
+    'apps.pipeline',
+    'apps.audit',
+    'apps.catalog',
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -174,6 +179,10 @@ CORS_ALLOWED_ORIGINS = config(
     cast=lambda v: [s.strip() for s in v.split(',')],
 )
 CORS_ALLOW_CREDENTIALS = True
+
+# ─── Custom User Model ────────────────────────────────────────────────────────
+
+AUTH_USER_MODEL = 'users.User'
 
 # ─── Default PK ───────────────────────────────────────────────────────────────
 
