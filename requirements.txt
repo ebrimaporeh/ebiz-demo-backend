@@ -9,9 +9,10 @@ dj-database-url==2.3.0
 # Auth
 djangorestframework-simplejwt==5.3.1
 
-# Storage (Supabase S3-compatible)
+# Storage — Supabase (S3-compatible + native client)
 django-storages[s3]==1.14.4
 boto3==1.35.0
+supabase>=2.9.0
 
 # Config
 python-decouple==3.8

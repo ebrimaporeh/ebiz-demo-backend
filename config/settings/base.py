@@ -123,20 +123,36 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 MEDIA_URL = '/media/'
 
-# ─── Supabase Storage (S3-compatible) ─────────────────────────────────────────
-# Activate in production by setting DEFAULT_FILE_STORAGE in production.py.
-# In development, files fall back to local MEDIA_ROOT.
+# ─── Supabase (project client) ────────────────────────────────────────────────
 
+SUPABASE_URL              = config('SUPABASE_URL',
+    default='https://neeuqoqxvmpbbskrxste.supabase.co')
+SUPABASE_SERVICE_ROLE_KEY = config('SUPABASE_SERVICE_ROLE_KEY', default='')
+SUPABASE_ANON_KEY         = config('SUPABASE_ANON_KEY',         default='')
+
+# ─── Supabase Storage ─────────────────────────────────────────────────────────
+# Files are uploaded via the Supabase storage client and their public URLs
+# stored directly in model URLFields.  No django-storages FileField magic needed.
+#
+# Public URL pattern:
+#   {SUPABASE_URL}/storage/v1/object/public/{bucket}/{path}
+
+SUPABASE_BUCKET_NAME = config('SUPABASE_BUCKET_NAME', default='gambih-files')
+
+# Bucket folder layout
+STORAGE_FOLDER_AVATARS  = 'avatars'
+STORAGE_FOLDER_DATASETS = 'datasets'
+STORAGE_FOLDER_RAW      = 'raw'
+
+# Also keep S3-compatible settings for django-storages (production fallback)
 SUPABASE_STORAGE_KEY    = config('SUPABASE_STORAGE_KEY',    default='')
 SUPABASE_STORAGE_SECRET = config('SUPABASE_STORAGE_SECRET', default='')
-SUPABASE_BUCKET_NAME    = config('SUPABASE_BUCKET_NAME',    default='gambih-files')
-SUPABASE_STORAGE_URL    = config('SUPABASE_STORAGE_URL',
-    default='https://neeuqoqxvmpbbskrxste.supabase.co/storage/v1/s3')
+SUPABASE_STORAGE_S3_URL = f'{SUPABASE_URL}/storage/v1/s3'
 
 AWS_ACCESS_KEY_ID       = SUPABASE_STORAGE_KEY
 AWS_SECRET_ACCESS_KEY   = SUPABASE_STORAGE_SECRET
 AWS_STORAGE_BUCKET_NAME = SUPABASE_BUCKET_NAME
-AWS_S3_ENDPOINT_URL     = SUPABASE_STORAGE_URL
+AWS_S3_ENDPOINT_URL     = SUPABASE_STORAGE_S3_URL
 AWS_S3_REGION_NAME      = 'eu-central-1'
 AWS_DEFAULT_ACL         = 'public-read'
 AWS_S3_FILE_OVERWRITE   = False

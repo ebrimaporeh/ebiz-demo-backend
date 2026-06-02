@@ -1,3 +1,25 @@
+"""
+Dataset pipeline models.
+
+Files attached to datasets (raw uploads, exported reports, etc.) are stored in
+Supabase Storage.  The public URL is saved in DatasetFile.file_url.
+
+Upload example (in a view/serializer):
+    from apps.storage_service import storage
+
+    path = storage.dataset_file_path(str(dataset.id), uploaded_file.name)
+    url  = storage.upload(path, uploaded_file.read(), uploaded_file.content_type)
+
+    DatasetFile.objects.create(
+        dataset=dataset,
+        file_name=uploaded_file.name,
+        file_url=url,
+        storage_path=path,
+        file_size=uploaded_file.size,
+        mime_type=uploaded_file.content_type,
+        uploaded_by=request.user,
+    )
+"""
 import uuid
 from django.conf import settings
 from django.db import models
@@ -135,3 +157,64 @@ class DatasetRow(models.Model):
 
     def __str__(self):
         return f'{self.dataset.name} — row {self.row_index}'
+
+
+FILE_KIND_CHOICES = [
+    ('raw',        'Raw Upload (CSV / Excel)'),
+    ('attachment', 'Attachment (PDF, doc, etc.)'),
+    ('export',     'Exported Report'),
+]
+
+
+class DatasetFile(models.Model):
+    """
+    A file attached to a dataset, stored in Supabase Storage.
+
+    `file_url` is the public URL returned by storage_service.storage.upload().
+    `storage_path` is the path inside the bucket (needed to delete the file later).
+
+    Folder layout inside the bucket:
+        datasets/{dataset.id}/files/   ← attachments / exports
+        datasets/{dataset.id}/raw/     ← original uploaded CSV / Excel
+    """
+    id           = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    dataset      = models.ForeignKey(Dataset, on_delete=models.CASCADE, related_name='files')
+    kind         = models.CharField(max_length=20, choices=FILE_KIND_CHOICES, default='attachment')
+    file_name    = models.CharField(max_length=255, help_text='Original filename')
+    file_url     = models.URLField(
+        max_length=500,
+        help_text='Public URL in Supabase Storage — returned by storage_service.storage.upload()',
+    )
+    storage_path = models.CharField(
+        max_length=500,
+        help_text='Path inside the bucket — required to delete the file',
+    )
+    file_size    = models.PositiveIntegerField(null=True, blank=True, help_text='Bytes')
+    mime_type    = models.CharField(max_length=100, blank=True)
+    uploaded_by  = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL,
+        null=True, related_name='uploaded_dataset_files',
+    )
+    uploaded_at  = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'dataset_files'
+        ordering = ['-uploaded_at']
+
+    def __str__(self):
+        return f'{self.dataset.name} → {self.file_name}'
+
+    def delete_from_storage(self) -> None:
+        """Remove the file from Supabase Storage then delete this record."""
+        from apps.storage_service import storage
+        storage.delete(self.storage_path)
+        self.delete()
+
+    def size_display(self) -> str:
+        if not self.file_size:
+            return '—'
+        for unit in ('B', 'KB', 'MB', 'GB'):
+            if self.file_size < 1024:
+                return f'{self.file_size:.1f} {unit}'
+            self.file_size /= 1024
+        return f'{self.file_size:.1f} TB'

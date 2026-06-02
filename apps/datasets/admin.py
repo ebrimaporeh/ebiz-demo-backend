@@ -20,3 +20,13 @@ class DatasetRowAdmin(admin.ModelAdmin):
     list_display   = ('dataset', 'row_index', 'created_at')
     raw_id_fields  = ('dataset',)
     ordering       = ('dataset', 'row_index')
+
+from .models import DatasetFile
+
+@admin.register(DatasetFile)
+class DatasetFileAdmin(admin.ModelAdmin):
+    list_display  = ('dataset', 'file_name', 'kind', 'mime_type', 'file_size', 'uploaded_by', 'uploaded_at')
+    list_filter   = ('kind',)
+    search_fields = ('file_name', 'dataset__name')
+    ordering      = ('-uploaded_at',)
+    readonly_fields = ('uploaded_at', 'file_url', 'storage_path')
